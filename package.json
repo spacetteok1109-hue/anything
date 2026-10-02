@@ -1,0 +1,11 @@
+{
+  "name": "manpower-log",
+  "version": "1.0.0",
+  "description": "건설 현장 인력 배치 기록 (자체 서버 운영, 외부 저장 없음)",
+  "private": true,
+  "engines": { "node": ">=22.13" },
+  "scripts": {
+    "start": "node server.js",
+    "test": "node --test test/*.test.js"
+  }
+}
