@@ -28,25 +28,39 @@ body {
   margin: 0; background: var(--bg); color: var(--ink);
   font: 14px/1.5 "Noto Sans KR", system-ui, -apple-system, "Segoe UI", sans-serif;
 }
-.app { display: grid; grid-template-columns: 340px 1fr; height: 100vh; }
+.app { display: grid; grid-template-columns: 360px 1fr; height: 100vh; }
 .side {
   background: var(--panel); border-right: 1px solid var(--line);
-  overflow-y: auto; padding: 18px 16px 40px;
+  display: flex; flex-direction: column; min-height: 0; overflow: hidden;
 }
+.sidehead { padding: 16px 18px 0; border-bottom: 1px solid var(--line); flex: none; }
+.pane { flex: 1; overflow-y: auto; padding: 16px 18px 48px; }
 h1 { font-size: 17px; margin: 0 0 2px; letter-spacing: -.01em; }
-.sub { color: var(--muted); font-size: 12px; margin: 0 0 14px; }
-fieldset { border: 0; border-top: 1px solid var(--line); margin: 14px 0 0; padding: 12px 0 0; }
-legend { font-size: 11px; font-weight: 700; color: var(--muted); letter-spacing: .08em; padding: 0 8px 0 0; text-transform: uppercase; }
-label { display: block; font-size: 12px; color: var(--muted); margin: 8px 0 3px; }
+.sub { color: var(--muted); font-size: 12px; margin: 0 0 12px; }
+.tabs { display: flex; gap: 2px; margin: 0 -6px; }
+button.tab {
+  flex: 1; border: 0; border-bottom: 2px solid transparent; border-radius: 0; background: none;
+  padding: 8px 4px 9px; color: var(--muted); font-size: 13px;
+}
+button.tab:hover { color: var(--ink); border-color: var(--line); }
+button.tab[aria-selected="true"] { color: var(--ink); font-weight: 700; border-color: var(--accent); }
+fieldset { border: 1px solid var(--line); border-radius: 10px; margin: 0 0 14px; padding: 2px 12px 14px; min-width: 0; }
+fieldset[hidden] { display: none; }
+legend { font-size: 12.5px; font-weight: 700; color: var(--ink); padding: 0 6px; margin-left: -6px; }
+label { display: block; font-size: 12px; color: var(--muted); margin: 10px 0 4px; }
 .row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
 .row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+.row > div, .row3 > div { min-width: 0; }
 input[type=text], input[type=number], select, textarea {
   width: 100%; font: inherit; color: var(--ink); background: var(--bg);
-  border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px;
+  border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; min-width: 0;
 }
-textarea { height: 260px; resize: vertical; font-family: "Noto Serif KR", serif; font-size: 13px; line-height: 1.6; }
-.chk { display: flex; align-items: center; gap: 7px; font-size: 13px; color: var(--ink); margin: 7px 0 0; }
-.chk input { margin: 0; }
+input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-visible {
+  outline: 2px solid var(--accent); outline-offset: 1px;
+}
+textarea { height: 300px; resize: vertical; font-family: "Noto Serif KR", serif; font-size: 13px; line-height: 1.6; }
+.chk { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--ink); margin: 9px 0 0; cursor: pointer; }
+.chk input { margin: 0; accent-color: var(--accent); }
 .btns { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
 button {
   font: inherit; font-size: 13px; cursor: pointer; padding: 7px 12px; border-radius: 6px;
@@ -54,7 +68,7 @@ button {
 }
 button:hover { border-color: var(--accent); }
 button.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 700; }
-.hint { font-size: 11.5px; color: var(--muted); margin: 6px 0 0; line-height: 1.55; }
+.hint { font-size: 11.5px; color: var(--muted); margin: 8px 0 0; line-height: 1.6; }
 .hint code { background: var(--bg); padding: 0 4px; border-radius: 3px; }
 
 .main { display: flex; flex-direction: column; min-width: 0; height: 100vh; }
@@ -64,6 +78,7 @@ button.primary { background: var(--accent); color: var(--accent-ink); border-col
 }
 .bar .stat { font-size: 13px; }
 .bar .grow { flex: 1; }
+.bar button { padding: 6px 12px; }
 .bar label { margin: 0; display: inline-flex; align-items: center; gap: 6px; }
 .bar input[type=range] { width: 120px; }
 .stage { flex: 1; overflow: auto; padding: 28px 18px 60px; }
@@ -138,7 +153,8 @@ textarea.small { height: 70px; font-family: inherit; font-size: 12.5px; }
 
 @media (max-width: 860px) {
   .app { grid-template-columns: 1fr; height: auto; }
-  .side { border-right: 0; border-bottom: 1px solid var(--line); }
+  .side { border-right: 0; border-bottom: 1px solid var(--line); overflow: visible; }
+  .pane { overflow: visible; }
   .main { height: auto; }
   .stage { overflow: visible; }
 }
@@ -158,10 +174,19 @@ textarea.small { height: 70px; font-family: inherit; font-size: 12.5px; }
 <body>
 <div class="app">
   <aside class="side">
-    <h1>소설 내지 발췌기</h1>
-    <p class="sub">원고를 붙여넣으면 A5·A6 등 판형에 맞춰 내지로 조판합니다.</p>
+    <div class="sidehead">
+      <h1>소설 내지 발췌기</h1>
+      <p class="sub">원고를 붙여넣으면 판형에 맞춰 내지로 조판합니다.</p>
+      <div class="tabs" role="tablist">
+        <button class="tab" role="tab" data-t="text">원고·삽화</button>
+        <button class="tab" role="tab" data-t="book">책 정보</button>
+        <button class="tab" role="tab" data-t="layout">판형</button>
+        <button class="tab" role="tab" data-t="style">서식</button>
+      </div>
+    </div>
+    <div class="pane">
 
-    <fieldset>
+    <fieldset data-tab="text">
       <legend>원고</legend>
       <textarea id="src" spellcheck="false" placeholder="여기에 원고를 붙여넣으세요"></textarea>
       <p class="hint">
@@ -176,7 +201,7 @@ textarea.small { height: 70px; font-family: inherit; font-size: 12.5px; }
       </div>
     </fieldset>
 
-    <fieldset>
+    <fieldset data-tab="book">
       <legend>책 정보 · 표지 · 판권</legend>
       <label for="title">책 제목 (표지·머리말)</label>
       <input type="text" id="title" placeholder="비워두면 머리말·표지 제목 없음">
@@ -196,14 +221,14 @@ textarea.small { height: 70px; font-family: inherit; font-size: 12.5px; }
       <textarea class="small" id="colo" placeholder="초판 발행, ISBN, 저작권 안내 등"></textarea>
     </fieldset>
 
-    <fieldset>
+    <fieldset data-tab="text">
       <legend>삽화</legend>
       <div class="btns" style="margin-top:0"><button id="btnImg">이미지 추가</button><input type="file" id="imgFile" accept="image/*" multiple hidden></div>
       <div id="imgList"></div>
       <p class="hint">“본문에 넣기”를 누르면 커서 위치에 <code>[삽화:1]</code> 줄이 들어갑니다. 그 줄의 위치가 삽화 위치입니다. “전면”은 한 쪽을 통째로 쓰고, “본문 중간”은 글 사이에 너비 %로 놓습니다. 이미지는 이 브라우저에 저장됩니다.</p>
     </fieldset>
 
-    <fieldset>
+    <fieldset data-tab="layout">
       <legend>판형</legend>
       <label for="size">규격</label>
       <select id="size">
@@ -229,7 +254,7 @@ textarea.small { height: 70px; font-family: inherit; font-size: 12.5px; }
       </div>
     </fieldset>
 
-    <fieldset>
+    <fieldset data-tab="style">
       <legend>본문 · 서체</legend>
       <label for="font">본문 서체</label>
       <select id="font">
@@ -274,7 +299,7 @@ textarea.small { height: 70px; font-family: inherit; font-size: 12.5px; }
       </select>
     </fieldset>
 
-    <fieldset>
+    <fieldset data-tab="style">
       <legend>문단 · 대사</legend>
       <label for="dlgStyle">대사 정렬</label>
       <select id="dlgStyle">
@@ -299,7 +324,7 @@ textarea.small { height: 70px; font-family: inherit; font-size: 12.5px; }
       <label class="chk"><input type="checkbox" id="auto" checked> “제1장”, “Chapter 1” 줄을 챕터로 자동 인식</label>
     </fieldset>
 
-    <fieldset>
+    <fieldset data-tab="style">
       <legend>각주</legend>
       <p class="hint" style="margin-top:0">본문에 <code>((각주 내용))</code>을 쓰면 해당 쪽 아래에 각주가 들어갑니다.</p>
       <label class="chk"><input type="checkbox" id="fnRestart"> 챕터마다 번호를 1부터 다시 시작</label>
@@ -307,7 +332,7 @@ textarea.small { height: 70px; font-family: inherit; font-size: 12.5px; }
       <input type="number" id="fnSize" value="82" min="60" max="100" step="1">
     </fieldset>
 
-    <fieldset>
+    <fieldset data-tab="layout">
       <legend>머리말 · 쪽번호</legend>
       <label class="chk"><input type="checkbox" id="runChap" checked> 오른쪽 페이지에 챕터명 표시</label>
       <label for="pn">쪽번호</label>
@@ -319,13 +344,7 @@ textarea.small { height: 70px; font-family: inherit; font-size: 12.5px; }
       <label class="chk"><input type="checkbox" id="pnSkip" checked> 챕터 첫 페이지는 쪽번호 생략</label>
     </fieldset>
 
-    <fieldset>
-      <legend>내보내기</legend>
-      <div class="btns">
-        <button class="primary" id="btnPrint">PDF로 저장 / 인쇄</button>
-      </div>
-      <p class="hint">인쇄 창에서 대상을 “PDF로 저장”으로, 여백은 “없음”, 배율은 100%로 설정하세요. 용지 크기는 판형에 맞게 자동 지정됩니다.</p>
-    </fieldset>
+    </div>
   </aside>
 
   <main class="main">
@@ -334,6 +353,7 @@ textarea.small { height: 70px; font-family: inherit; font-size: 12.5px; }
       <span class="grow"></span>
       <label class="chk" style="margin:0"><input type="checkbox" id="spread"> 펼침면 보기</label>
       <label>확대 <input type="range" id="zoom" min="40" max="160" value="90"></label>
+      <button class="primary" id="btnPrint" title="인쇄 창에서 대상을 PDF로 저장, 여백 없음, 배율 100%로 설정하세요">PDF로 저장 / 인쇄</button>
     </div>
     <div class="stage"><div class="pages" id="pages"></div></div>
   </main>
@@ -881,6 +901,16 @@ textarea.small { height: 70px; font-family: inherit; font-size: 12.5px; }
     e.target.value = '';
     renderImgList(); saveImages(); schedule();
   };
+
+  /* ---------- 탭 ---------- */
+  function showTab(t) {
+    document.querySelectorAll('button.tab').forEach(b => b.setAttribute('aria-selected', b.dataset.t === t ? 'true' : 'false'));
+    document.querySelectorAll('fieldset[data-tab]').forEach(f => { f.hidden = f.dataset.tab !== t; });
+    try { localStorage.setItem('novel-tab', t); } catch (e) {}
+  }
+  document.querySelectorAll('button.tab').forEach(b => b.addEventListener('click', () => showTab(b.dataset.t)));
+  let tab0 = 'text'; try { tab0 = localStorage.getItem('novel-tab') || 'text'; } catch (e) {}
+  showTab(['text','book','layout','style'].includes(tab0) ? tab0 : 'text');
 
   /* ---------- 시작 ---------- */
   if (!load()) { $('src').value = SAMPLE; $('title').value = '첫눈'; $('author').value = '작가명'; }
