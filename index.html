@@ -6,7 +6,7 @@
 <title>소설 내지 발췌기</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Gowun+Batang:wght@400;700&family=Nanum+Myeongjo:wght@400;700&family=Noto+Sans+KR:wght@400;700&family=Noto+Serif+KR:wght@400;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Do+Hyeon&family=Gowun+Batang:wght@400;700&family=Gowun+Dodum&family=Hahmlet:wght@400;700&family=Nanum+Gothic:wght@400;700&family=Nanum+Myeongjo:wght@400;700;800&family=Noto+Sans+KR:wght@400;700&family=Noto+Serif+KR:wght@400;700&family=Song+Myung&display=swap" rel="stylesheet">
 <style>
 :root {
   --bg: #eceae5;
@@ -80,22 +80,38 @@ button.primary { background: var(--accent); color: var(--accent-ink); border-col
 }
 .frame { position: absolute; overflow: hidden; }
 .flow {
-  height: 100%; column-fill: auto; text-align: justify;
+  width: 100%; display: flow-root; text-align: justify;
   font-family: var(--font); font-size: var(--fs); line-height: var(--lh);
   letter-spacing: var(--ls); word-break: var(--wb); line-break: strict;
-  orphans: 2; widows: 2; hanging-punctuation: first;
+  text-wrap: var(--tw);
 }
+.flow > :first-child { margin-top: 0 !important; }
 .flow p { margin: 0; text-indent: 1em; }
 .flow p.noindent { text-indent: 0; }
+.flow p.gap { margin-top: var(--gapem); }
 .flow p.dlg.hang { text-indent: -1em; padding-left: 1em; }
 .flow p.dlg.hang.noindent { text-indent: 0; padding-left: 0; }
 .flow h2.chapter {
-  break-before: column; break-after: avoid; margin: 0; text-align: center;
+  margin: 0; text-align: center; font-family: var(--tfont);
   font-weight: 700; font-size: 1.5em; line-height: 1.4; text-indent: 0; letter-spacing: .02em;
   padding: var(--drop) 0 3.2em;
 }
 .flow h2.chapter .no { display: block; font-size: .5em; font-weight: 400; letter-spacing: .3em; margin-bottom: 1em; opacity: .7; }
-.flow .scene { text-align: center; text-indent: 0; margin: 0; letter-spacing: .6em; padding-left: .6em; break-inside: avoid; }
+.flow .scene { text-align: center; text-indent: 0; margin: 0; letter-spacing: .6em; padding-left: .6em; }
+.flow .nw { white-space: nowrap; }
+.flow sup.fnref { font-size: .62em; vertical-align: super; line-height: 0; text-indent: 0; letter-spacing: 0; font-weight: 400; margin-left: .05em; }
+.fns {
+  position: absolute; font-family: var(--font); font-size: var(--fnfs); line-height: 1.55;
+  padding-top: 3mm; text-align: justify; word-break: var(--wb); line-break: strict; color: #2b2925;
+}
+.fns::before { content: ""; position: absolute; top: 1mm; left: 0; width: 28%; height: 0; border-top: .5px solid #8a847a; }
+.fns p.fn { margin: 0; padding-left: 1.7em; text-indent: -1.7em; }
+.fns p.fn .fnn { display: inline-block; width: 1.7em; text-indent: 0; }
+.fm { -webkit-print-color-adjust: exact; print-color-adjust: exact; font-family: var(--font); }
+.fm .abs { position: absolute; left: 0; right: 0; text-align: center; }
+.fm .ttl { font-family: var(--tfont); font-weight: 700; line-height: 1.35; letter-spacing: .02em; }
+.fm .rule { display: block; width: 8mm; border-top: 1px solid currentColor; margin: 0 auto; opacity: .6; }
+.fm .colo { position: absolute; left: 0; right: 0; text-align: left; line-height: 1.8; white-space: pre-wrap; color: #4a463f; }
 .hd, .ft {
   position: absolute; left: 0; right: 0; text-align: center; font-family: var(--font);
   font-size: 8pt; color: #6b665e; letter-spacing: .04em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
@@ -103,6 +119,8 @@ button.primary { background: var(--accent); color: var(--accent-ink); border-col
 .hd.l { text-align: left; } .hd.r { text-align: right; }
 .ft.l { text-align: left; } .ft.r { text-align: right; }
 #measure { position: absolute; left: -99999px; top: 0; visibility: hidden; pointer-events: none; }
+input[type=color] { width: 100%; height: 32px; padding: 2px; background: var(--bg); border: 1px solid var(--line); border-radius: 6px; }
+textarea.small { height: 70px; font-family: inherit; font-size: 12.5px; }
 .empty { color: var(--muted); text-align: center; padding: 80px 0; }
 
 @media (max-width: 860px) {
@@ -146,6 +164,26 @@ button.primary { background: var(--accent); color: var(--accent-ink); border-col
     </fieldset>
 
     <fieldset>
+      <legend>책 정보 · 표지</legend>
+      <label for="title">책 제목 (표지·머리말)</label>
+      <input type="text" id="title" placeholder="비워두면 머리말·표지 제목 없음">
+      <div class="row">
+        <div><label for="author">저자</label><input type="text" id="author"></div>
+        <div><label for="publisher">발행처</label><input type="text" id="publisher"></div>
+      </div>
+      <label for="subtitle">부제</label>
+      <input type="text" id="subtitle">
+      <label class="chk"><input type="checkbox" id="fmCover" checked> 표지 페이지</label>
+      <label class="chk"><input type="checkbox" id="fmTitle" checked> 속표지(표제지) 페이지</label>
+      <label class="chk"><input type="checkbox" id="fmColo" checked> 판권지(마지막 페이지)</label>
+      <label class="chk"><input type="checkbox" id="startRight" checked> 본문은 오른쪽(홀수) 페이지에서 시작</label>
+      <label for="coverColor">표지 바탕색</label>
+      <input type="color" id="coverColor" value="#2f3b4a">
+      <label for="colo">판권지 문구</label>
+      <textarea class="small" id="colo" placeholder="초판 발행, ISBN, 저작권 안내 등"></textarea>
+    </fieldset>
+
+    <fieldset>
       <legend>판형</legend>
       <label for="size">규격</label>
       <select id="size">
@@ -172,20 +210,48 @@ button.primary { background: var(--accent); color: var(--accent-ink); border-col
     </fieldset>
 
     <fieldset>
-      <legend>본문</legend>
-      <label for="font">서체</label>
+      <legend>본문 · 서체</legend>
+      <label for="font">본문 서체</label>
       <select id="font">
         <option value="'Nanum Myeongjo', 'Noto Serif KR', serif">나눔명조</option>
         <option value="'Noto Serif KR', serif">본명조 (Noto Serif KR)</option>
         <option value="'Gowun Batang', serif">고운바탕</option>
+        <option value="'Hahmlet', serif">함렛</option>
+        <option value="'Song Myung', serif">송명</option>
         <option value="'Noto Sans KR', sans-serif">본고딕 (Noto Sans KR)</option>
+        <option value="'Gowun Dodum', sans-serif">고운돋움</option>
+        <option value="'Nanum Gothic', sans-serif">나눔고딕</option>
+      </select>
+      <label for="customFont">직접 입력 (내 컴퓨터에 설치된 서체명)</label>
+      <input type="text" id="customFont" placeholder="예: 리디바탕, KoPubWorld바탕체">
+      <label for="tfont">챕터·표지 제목 서체</label>
+      <select id="tfont">
+        <option value="body">본문과 동일</option>
+        <option value="'Nanum Myeongjo', serif">나눔명조</option>
+        <option value="'Hahmlet', serif">함렛</option>
+        <option value="'Black Han Sans', sans-serif">블랙한산스</option>
+        <option value="'Do Hyeon', sans-serif">도현</option>
+        <option value="'Song Myung', serif">송명</option>
+        <option value="'Noto Sans KR', sans-serif">본고딕</option>
       </select>
       <div class="row3">
         <div><label>크기 pt</label><input type="number" id="fs" value="10" min="6" max="20" step="0.25"></div>
         <div><label>줄간격 %</label><input type="number" id="lh" value="170" min="110" max="260" step="5"></div>
         <div><label>자간 em</label><input type="number" id="ls" value="-0.01" min="-0.1" max="0.2" step="0.005"></div>
       </div>
-      <label class="chk"><input type="checkbox" id="keep"> 어절 단위로 줄바꿈</label>
+      <label for="wrap">줄바꿈 · 금칙 처리</label>
+      <select id="wrap">
+        <option value="char">글자 단위 (한글 금칙 strict)</option>
+        <option value="pretty">글자 단위 + 마지막 줄 한 글자 방지</option>
+        <option value="word">어절 단위 (단어 중간 안 끊음)</option>
+        <option value="wordpretty">어절 단위 + 마지막 줄 균형</option>
+      </select>
+      <label for="orphans">쪽 첫·끝 줄 처리 (고아·과부 줄)</label>
+      <select id="orphans">
+        <option value="1">제한 없음</option>
+        <option value="2" selected>문단이 쪽을 넘을 때 최소 2줄 유지</option>
+        <option value="3">최소 3줄 유지</option>
+      </select>
     </fieldset>
 
     <fieldset>
@@ -201,14 +267,28 @@ button.primary { background: var(--accent); color: var(--accent-ink); border-col
         <option value="corner">「 」 『 』 낫표</option>
         <option value="keep">원문 그대로</option>
       </select>
+      <label for="dlgGap">대사 앞뒤 간격 (줄)</label>
+      <select id="dlgGap">
+        <option value="0">없음</option>
+        <option value="0.25">0.25줄</option>
+        <option value="0.5">0.5줄</option>
+        <option value="1">1줄</option>
+      </select>
+      <label class="chk"><input type="checkbox" id="norm" checked> 말줄임표·줄표 정리 (... → ……, -- → ――)</label>
       <label class="chk"><input type="checkbox" id="firstFlush"> 챕터·장면 첫 문단은 들여쓰지 않음</label>
       <label class="chk"><input type="checkbox" id="auto" checked> “제1장”, “Chapter 1” 줄을 챕터로 자동 인식</label>
     </fieldset>
 
     <fieldset>
+      <legend>각주</legend>
+      <p class="hint" style="margin-top:0">본문에 <code>((각주 내용))</code>을 쓰면 해당 쪽 아래에 각주가 들어갑니다.</p>
+      <label class="chk"><input type="checkbox" id="fnRestart"> 챕터마다 번호를 1부터 다시 시작</label>
+      <label for="fnSize">각주 글자 크기 (본문 대비 %)</label>
+      <input type="number" id="fnSize" value="82" min="60" max="100" step="1">
+    </fieldset>
+
+    <fieldset>
       <legend>머리말 · 쪽번호</legend>
-      <label for="title">책 제목 (머리말)</label>
-      <input type="text" id="title" placeholder="비워두면 머리말 없음">
       <label class="chk"><input type="checkbox" id="runChap" checked> 오른쪽 페이지에 챕터명 표시</label>
       <label for="pn">쪽번호</label>
       <select id="pn">
@@ -244,16 +324,17 @@ button.primary { background: var(--accent); color: var(--accent-ink); border-col
 (() => {
   const $ = id => document.getElementById(id);
   const MM = 96 / 25.4;                 // 1mm in CSS px
-  const GAP = 24;                       // mm, 컬럼 간격 (보이지 않음)
-  const KEY = 'novel-excerpt-v1';
+  const PT = 96 / 72;                   // 1pt in CSS px
+  const KEY = 'novel-excerpt-v2';
+  const FN = '';                  // 각주 자리표시
 
   const SAMPLE = `# 제1장 첫눈
-눈이 내리기 시작한 것은 정오를 조금 지났을 무렵이었다. 창가에 앉아 있던 하윤은 유리 위에 내려앉았다 사라지는 작은 결정들을 오래도록 바라보았다.
+눈이 내리기 시작한 것은 정오를 조금 지났을 무렵이었다. 창가에 앉아 있던 하윤은 유리 위에 내려앉았다 사라지는 작은 결정들을 오래도록 바라보았다.((이 지방에서는 첫눈이 보통 11월 중순에 내린다. 올해는 열흘 가까이 늦었다.))
 "올해는 좀 늦네."
 등 뒤에서 목소리가 들렸다. 돌아보지 않아도 누구인지 알 수 있었다. 이 집에서 발소리를 내지 않고 걷는 사람은 한 명뿐이었다.
 "늦은 게 아니라, 기다린 거겠지."
 "무슨 뜻이야?"
-"별 뜻 없어. 그냥 그런 기분이 들었어."
+"별 뜻 없어. 그냥 그런 기분이 들었어..."
 하윤은 컵을 두 손으로 감싸 쥐었다. 차는 이미 식어 있었지만 손바닥에 닿는 온기가 싫지 않았다. 말하지 않은 문장들이 방 안에 가라앉아 있었다.
 ***
 저녁이 되자 눈발은 굵어졌다. 가로등 불빛 아래로 하얀 것들이 비스듬히 쏟아졌고, 골목은 어느새 소리를 잃었다.
@@ -261,7 +342,7 @@ button.primary { background: var(--accent); color: var(--accent-ink); border-col
 그가 외투를 건넸다. 하윤은 잠시 망설이다가 그것을 받아 들었다.
 "어디로?"
 "네가 처음 눈을 본 곳으로."
-그 말에 하윤은 웃고 말았다. 처음 눈을 본 곳이라니, 그런 곳이 있을 리 없었다. 그러나 그가 너무 진지한 얼굴로 서 있었기 때문에, 웃음은 곧 입안에서 녹아 버렸다.
+그 말에 하윤은 웃고 말았다. 처음 눈을 본 곳이라니, 그런 곳이 있을 리 없었다.((하윤은 여섯 살 이전의 기억이 거의 없다. 이 사실은 뒤에서 다시 언급된다.)) 그러나 그가 너무 진지한 얼굴로 서 있었기 때문에, 웃음은 곧 입안에서 녹아 버렸다.
 
 # 제2장 빈 의자
 이튿날 아침, 하윤은 식탁 맞은편의 의자가 비어 있다는 사실을 한참 뒤에야 알아차렸다. 접시는 그대로였고 컵에는 물이 반쯤 남아 있었다.
@@ -269,19 +350,32 @@ button.primary { background: var(--accent); color: var(--accent-ink); border-col
 혼잣말이 방 안에 퍼졌다가 돌아왔다. 대답하는 사람은 없었다.
 창밖의 눈은 밤새 쌓여 있었다. 발자국 하나 없는 마당을 가로질러, 하윤은 천천히 문 쪽으로 걸어갔다.`;
 
-  const state = { rafId: 0, timer: 0 };
+  const state = { timer: 0 };
 
   /* ---------- 설정 읽기 / 저장 ---------- */
-  const fieldIds = ['src','size','cw','ch','mt','mb','mi','mo','font','fs','lh','ls','keep','dlgStyle','quote','firstFlush','auto','title','runChap','pn','pnSkip','spread','zoom'];
+  const fieldIds = ['src','size','cw','ch','mt','mb','mi','mo','font','customFont','tfont','fs','lh','ls','wrap','orphans',
+    'dlgStyle','dlgGap','quote','norm','firstFlush','auto','fnRestart','fnSize',
+    'title','author','publisher','subtitle','fmCover','fmTitle','fmColo','startRight','coverColor','colo',
+    'runChap','pn','pnSkip','spread','zoom'];
   function readCfg() {
     const v = id => $(id).type === 'checkbox' ? $(id).checked : $(id).value;
     const num = (id, d) => { const n = parseFloat($(id).value); return isFinite(n) ? n : d; };
-    let [pw, ph] = $('size').value === 'custom' ? [num('cw',130), num('ch',190)] : $('size').value.split(',').map(Number);
+    const [pw, ph] = $('size').value === 'custom' ? [num('cw',130), num('ch',190)] : $('size').value.split(',').map(Number);
+    const custom = $('customFont').value.replace(/['";{}]/g, '').trim();
+    const font = (custom ? `'${custom}', ` : '') + v('font');
+    const tf = v('tfont');
+    const wrap = v('wrap');
     return {
       pw, ph, mt: num('mt',18), mb: num('mb',20), mi: num('mi',20), mo: num('mo',15),
-      font: v('font'), fs: num('fs',10), lh: num('lh',170) / 100, ls: num('ls',0),
-      keep: v('keep'), dlgStyle: v('dlgStyle'), quote: v('quote'), firstFlush: v('firstFlush'), auto: v('auto'),
-      title: v('title').trim(), runChap: v('runChap'), pn: v('pn'), pnSkip: v('pnSkip'),
+      font, tfont: tf === 'body' ? font : tf, fs: num('fs',10), lh: num('lh',170) / 100, ls: num('ls',0),
+      keep: wrap.startsWith('word'), pretty: wrap.endsWith('pretty'),
+      orphans: parseInt(v('orphans'), 10) || 2,
+      dlgStyle: v('dlgStyle'), dlgGap: parseFloat(v('dlgGap')) || 0, quote: v('quote'), norm: v('norm'),
+      firstFlush: v('firstFlush'), auto: v('auto'), fnRestart: v('fnRestart'), fnSize: num('fnSize', 82) / 100,
+      title: v('title').trim(), author: v('author').trim(), publisher: v('publisher').trim(), subtitle: v('subtitle').trim(),
+      fmCover: v('fmCover'), fmTitle: v('fmTitle'), fmColo: v('fmColo'), startRight: v('startRight'),
+      coverColor: v('coverColor'), colo: v('colo').trim(),
+      runChap: v('runChap'), pn: v('pn'), pnSkip: v('pnSkip'),
     };
   }
   function save() {
@@ -325,6 +419,10 @@ button.primary { background: var(--accent); color: var(--accent-ink); border-col
     }
     return out;
   }
+  const normalize = (t, cfg) => cfg.norm ? t.replace(/\.{3,}|…+/g, '……').replace(/-{2,}|—{2,}|―{2,}/g, '――') : t;
+  const clean = (t, cfg) => normalize(convertQuotes(t, cfg.quote), cfg);
+  // 말줄임표·줄표는 중간에서 줄바꿈되지 않게 묶는다
+  const fmt = t => esc(t).replace(/(……+|――+)/g, '<span class="nw">$1</span>');
 
   const AUTO_CH = /^(제\s*[0-9一二三四五六七八九十]+\s*[장화부편]\b.*|chapter\s+\d+\b.*|\d+\s*장\b.*|prologue|epilogue|프롤로그|에필로그)$/i;
   function parse(text, cfg) {
@@ -336,47 +434,172 @@ button.primary { background: var(--accent); color: var(--accent-ink); border-col
       if ((m = line.match(/^#{1,3}\s+(.*)$/))) { blocks.push({ t:'chapter', text:m[1] }); continue; }
       if (/^(\*{3,}|-{3,}|(\*\s+){2,}\*|#{4,}|―{3,}|—{3,})$/.test(line)) { blocks.push({ t:'scene' }); continue; }
       if (cfg.auto && AUTO_CH.test(line)) { blocks.push({ t:'chapter', text:line }); continue; }
-      const q = convertQuotes(line, cfg.quote);
-      blocks.push({ t:'p', text:q, dlg: /^[“‘「『"']/.test(q) });
+      // 각주 추출: ((내용))
+      const notes = [];
+      const body = line.replace(/\(\(([\s\S]*?)\)\)/g, (_, n) => { notes.push(clean(n, cfg)); return FN; });
+      const q = clean(body, cfg);
+      blocks.push({ t:'p', text:q, notes, dlg: /^[“‘「『"']/.test(q) });
     }
     return blocks;
   }
 
   function buildHtml(blocks, cfg) {
-    let html = '', fresh = false, ci = 0;
+    let html = '', fresh = false, ci = 0, prevDlg = null, num = 0;
+    const notes = [];
     for (const b of blocks) {
       if (b.t === 'chapter') {
         const m = b.text.match(/^(제\s*\d+\s*[장화부편]|chapter\s+\d+|\d+\s*장)\s*[.:·\-–—]?\s*(.*)$/i);
         html += m && m[2]
-          ? `<h2 class="chapter" data-i="${ci}" data-title="${esc(m[2])}"><span class="no">${esc(m[1])}</span>${esc(m[2])}</h2>`
-          : `<h2 class="chapter" data-i="${ci}" data-title="${esc(b.text)}">${esc(b.text)}</h2>`;
-        ci++; fresh = true;
+          ? `<h2 class="chapter" data-title="${esc(m[2])}"><span class="no">${esc(m[1])}</span>${esc(m[2])}</h2>`
+          : `<h2 class="chapter" data-title="${esc(b.text)}">${esc(b.text)}</h2>`;
+        ci++; fresh = true; prevDlg = null;
+        if (cfg.fnRestart) num = 0;
       } else if (b.t === 'scene') {
-        html += `<p class="scene">*&nbsp;*&nbsp;*</p>`; fresh = true;
+        html += `<p class="scene">*&nbsp;*&nbsp;*</p>`; fresh = true; prevDlg = null;
       } else {
         const cls = [];
         if (b.dlg) { cls.push('dlg'); if (cfg.dlgStyle === 'hang') cls.push('hang'); }
         if (fresh && cfg.firstFlush) cls.push('noindent');
-        html += `<p${cls.length ? ` class="${cls.join(' ')}"` : ''}>${esc(b.text)}</p>`;
-        fresh = false;
+        if (cfg.dlgGap && prevDlg !== null && prevDlg !== b.dlg) cls.push('gap');
+        let k = 0;
+        const inner = b.text.split(FN).map((seg, i, arr) => {
+          let out = fmt(seg);
+          if (i < arr.length - 1) {
+            const id = notes.length;
+            notes.push({ num: ++num, text: b.notes[k++] || '' });
+            out += `<sup class="fnref" data-fn="${id}">${num})</sup>`;
+          }
+          return out;
+        }).join('');
+        html += `<p${cls.length ? ` class="${cls.join(' ')}"` : ''}>${inner}</p>`;
+        fresh = false; prevDlg = b.dlg;
       }
     }
-    return html;
+    return { html, notes };
   }
 
   /* ---------- 조판 ---------- */
   function applyFlowStyle(el, cfg, cw, chh) {
     const s = el.style;
     s.setProperty('--font', cfg.font);
+    s.setProperty('--tfont', cfg.tfont);
     s.setProperty('--fs', cfg.fs + 'pt');
     s.setProperty('--lh', cfg.lh);
     s.setProperty('--ls', cfg.ls + 'em');
     s.setProperty('--wb', cfg.keep ? 'keep-all' : 'normal');
+    s.setProperty('--tw', cfg.pretty ? 'pretty' : 'wrap');
     s.setProperty('--drop', (chh * 0.16) + 'mm');
+    s.setProperty('--gapem', (cfg.dlgGap * cfg.lh) + 'em');
     s.width = cw + 'mm';
-    s.height = chh + 'mm';
-    s.columnWidth = cw + 'mm';
-    s.columnGap = GAP + 'mm';
+  }
+
+  // 측정용 흐름에서 줄 단위 배치 정보를 만든다
+  function measureUnits(mf, lineH) {
+    const base = mf.getBoundingClientRect().top;
+    return [...mf.children].map(el => {
+      const r = el.getBoundingClientRect();
+      const top = r.top - base;
+      const isCh = el.classList.contains('chapter');
+      const n = isCh ? 1 : Math.max(1, Math.round(r.height / lineH));
+      const lh = isCh ? r.height : r.height / n;
+      const refs = Array.from({ length: n }, () => []);
+      el.querySelectorAll('.fnref').forEach(sup => {
+        const sr = sup.getBoundingClientRect();
+        const k = Math.min(n - 1, Math.max(0, Math.floor((sr.top + sr.height / 2 - base - top) / lh)));
+        refs[k].push(+sup.dataset.fn);
+      });
+      return { type: isCh ? 'c' : 'p', el, top, n, lh, refs, title: el.dataset.title };
+    });
+  }
+
+  // 쪽 단위로 줄을 채운다 (각주 높이만큼 본문 영역이 줄어든다)
+  function layoutPages(units, chPx, noteH, sepPx, orphans) {
+    const widows = orphans;
+    const noteTotal = ids => ids.length ? sepPx + ids.reduce((a, i) => a + noteH[i], 0) : 0;
+    const pages = [];
+    let bi = 0, li = 0;
+    while (bi < units.length) {
+      const startTop = units[bi].top + li * units[bi].lh;
+      let notes = [], committed = 0, last = null;
+      for (let cb = bi; cb < units.length; cb++) {
+        const u = units[cb];
+        if (u.type === 'c' && committed > 0) break;      // 챕터는 항상 새 쪽에서 시작
+        const from = cb === bi ? li : 0;
+        let k = from, trial = notes.slice();
+        while (k < u.n) {
+          const nt = trial.concat(u.refs[k]);
+          const bottom = u.top + (k + 1) * u.lh - startTop;
+          if ((committed + (k - from)) > 0 && bottom + noteTotal(nt) > chPx + 0.5) break;
+          trial = nt; k++;
+        }
+        if (k < u.n && u.type !== 'c') {                  // 문단이 쪽을 넘어감: 고아·과부 줄 처리
+          if (u.n - k < widows) k = u.n - widows;
+          if (from === 0 && k - from < orphans) k = from;
+          if (committed === 0 && k <= from) k = from + 1;
+          if (k <= from) break;                            // 문단 전체를 다음 쪽으로
+        }
+        for (let l = from; l < k; l++) notes = notes.concat(u.refs[l]);
+        committed += k - from;
+        last = { b: cb, l: k };
+        if (k < u.n) break;
+      }
+      const lu = units[last.b];
+      pages.push({
+        startBlock: bi, startLine: li, startTop, endBlock: last.b,
+        bottom: lu.top + last.l * lu.lh, notes,
+        isStart: units[bi].type === 'c' && li === 0,
+      });
+      if (last.l < lu.n) { bi = last.b; li = last.l; } else { bi = last.b + 1; li = 0; }
+    }
+    return pages;
+  }
+
+  function contrastInk(hex) {
+    const n = parseInt(hex.slice(1), 16), r = n >> 16, g = (n >> 8) & 255, b = n & 255;
+    return (0.299 * r + 0.587 * g + 0.114 * b) > 150 ? '#1f1d1a' : '#f6f2ea';
+  }
+
+  function mkPage(cfg, cls) {
+    const p = document.createElement('div');
+    p.className = 'page ' + (cls || '');
+    p.style.width = cfg.pw + 'mm';
+    p.style.height = cfg.ph + 'mm';
+    p.style.setProperty('--font', cfg.font);
+    p.style.setProperty('--tfont', cfg.tfont);
+    return p;
+  }
+  const abs = (cls, css, html) => { const d = document.createElement('div'); d.className = cls; Object.assign(d.style, css); d.innerHTML = html; return d; };
+
+  function frontPage(kind, cfg) {
+    const sc = cfg.pw / 148, pw = cfg.pw, ph = cfg.ph;
+    const p = mkPage(cfg, 'fm');
+    const title = esc(cfg.title || '제목'), sub = esc(cfg.subtitle), au = esc(cfg.author), pub = esc(cfg.publisher);
+    if (kind === 'cover') {
+      const ink = contrastInk(cfg.coverColor);
+      p.style.background = cfg.coverColor; p.style.color = ink;
+      p.appendChild(abs('abs', { top: ph * 0.3 + 'mm', padding: `0 ${pw * 0.1}mm` },
+        `<span class="rule" style="margin-bottom:${7 * sc}mm"></span>
+         <div class="ttl" style="font-size:${28 * sc}pt">${title}</div>
+         ${sub ? `<div style="font-size:${11 * sc}pt;margin-top:${5 * sc}mm;opacity:.8">${sub}</div>` : ''}
+         <span class="rule" style="margin-top:${8 * sc}mm"></span>`));
+      if (au) p.appendChild(abs('abs', { bottom: ph * 0.11 + 'mm', fontSize: 13 * sc + 'pt', letterSpacing: '.2em' }, au));
+    } else if (kind === 'titlepage') {
+      p.appendChild(abs('abs', { top: ph * 0.33 + 'mm', padding: `0 ${pw * 0.1}mm` },
+        `<div class="ttl" style="font-size:${20 * sc}pt">${title}</div>
+         ${sub ? `<div style="font-size:${10 * sc}pt;margin-top:${4 * sc}mm;color:#5d584f">${sub}</div>` : ''}
+         ${au ? `<div style="font-size:${11 * sc}pt;margin-top:${14 * sc}mm;letter-spacing:.15em">${au}</div>` : ''}`));
+      if (pub) p.appendChild(abs('abs', { bottom: ph * 0.1 + 'mm', fontSize: 9 * sc + 'pt', color: '#5d584f', letterSpacing: '.1em' }, pub));
+    } else if (kind === 'colophon') {
+      const lines = [];
+      if (cfg.title) lines.push(`<b>${title}</b>`);
+      if (cfg.author) lines.push(`지은이  ${au}`);
+      if (cfg.publisher) lines.push(`펴낸곳  ${pub}`);
+      let txt = lines.join('\n');
+      if (cfg.colo) txt += (txt ? '\n\n' : '') + esc(cfg.colo);
+      const d = abs('colo', { bottom: cfg.mb + 'mm', left: cfg.mi + 'mm', right: cfg.mo + 'mm', fontSize: 8 * sc + 'pt' }, txt);
+      p.appendChild(d);
+    }
+    return p;
   }
 
   function paginate() {
@@ -394,76 +617,96 @@ button.primary { background: var(--accent); color: var(--accent-ink); border-col
       return;
     }
 
-    const html = buildHtml(blocks, cfg);
+    const { html, notes } = buildHtml(blocks, cfg);
     const meas = $('measure');
-    meas.innerHTML = `<div class="flow" id="mflow">${html}</div>`;
+    const fnPt = cfg.fs * cfg.fnSize;
+    meas.innerHTML = `<div class="flow" id="mflow">${html}</div><div class="fns" id="mfns" style="position:relative;padding:0">${
+      notes.map(n => `<p class="fn"><span class="fnn">${n.num})</span>${fmt(n.text)}</p>`).join('')}</div>`;
     const mf = $('mflow');
     applyFlowStyle(mf, cfg, cw, chh);
+    const mfns = $('mfns');
+    mfns.style.width = cw + 'mm';
+    mfns.style.setProperty('--font', cfg.font);
+    mfns.style.setProperty('--fnfs', fnPt + 'pt');
+    mfns.style.setProperty('--wb', cfg.keep ? 'keep-all' : 'normal');
+    const noteH = [...mfns.children].map(e => e.getBoundingClientRect().height);
 
-    const step = (cw + GAP) * MM;
-    const base = mf.getBoundingClientRect().left;
-    const n = Math.max(1, Math.round((mf.scrollWidth + GAP * MM) / step));
+    const lineH = cfg.fs * PT * cfg.lh;
+    const units = measureUnits(mf, lineH);
+    const pgs = layoutPages(units, chh * MM, noteH, 3 * MM, cfg.orphans);
 
-    // 챕터가 시작되는 페이지
-    const chapters = [...mf.querySelectorAll('h2.chapter')].map(h => ({
-      title: h.dataset.title,
-      page: Math.floor((h.getBoundingClientRect().left - base) / step + 0.02),
-    }));
-    const startPages = new Set(chapters.map(c => c.page));
+    const chapters = units.map((u, i) => ({ i, u })).filter(x => x.u.type === 'c').map(x => ({ i: x.i, title: x.u.title }));
 
-    const frag = document.createDocumentFragment();
-    const pageEls = [];
-    for (let i = 0; i < n; i++) {
-      const odd = (i + 1) % 2 === 1;                   // 오른쪽(홀수) 페이지는 제본면이 왼쪽
+    // ----- 전체 페이지 목록 (표지류 + 본문 + 판권지)
+    const list = [];
+    if (cfg.fmCover) list.push({ kind: 'cover' });
+    if (cfg.fmTitle) list.push({ kind: 'titlepage' });
+    if (cfg.startRight && list.length % 2 === 1) list.push({ kind: 'blank' });
+    const front = list.length;
+    pgs.forEach((pg, j) => list.push({ kind: 'body', pg, j }));
+    if (cfg.fmColo) {
+      if (list.length % 2 === 0) list.push({ kind: 'blank' });   // 판권지는 왼쪽(짝수) 페이지에 둔다
+      list.push({ kind: 'colophon' });
+    }
+
+    const pageEls = list.map((it, g) => {
+      if (it.kind === 'blank') return mkPage(cfg, 'blank');
+      if (it.kind !== 'body') return frontPage(it.kind, cfg);
+      const { pg, j } = it;
+      const odd = (g + 1) % 2 === 1;                    // 오른쪽(홀수) 페이지는 제본면이 왼쪽
       const left = odd ? cfg.mi : cfg.mo;
-      const page = document.createElement('div');
-      page.className = 'page';
-      page.style.width = cfg.pw + 'mm';
-      page.style.height = cfg.ph + 'mm';
-      page.style.setProperty('--font', cfg.font);
+      const page = mkPage(cfg);
 
       const frame = document.createElement('div');
       frame.className = 'frame';
-      Object.assign(frame.style, { left: left + 'mm', top: cfg.mt + 'mm', width: cw + 'mm', height: chh + 'mm' });
+      Object.assign(frame.style, { left: left + 'mm', top: cfg.mt + 'mm', width: cw + 'mm', height: (pg.bottom - pg.startTop) + 'px' });
       const flow = document.createElement('div');
       flow.className = 'flow';
-      flow.innerHTML = html;
       applyFlowStyle(flow, cfg, cw, chh);
-      flow.style.transform = `translateX(${-i * (cw + GAP)}mm)`;
+      for (let b = pg.startBlock; b <= pg.endBlock; b++) flow.appendChild(units[b].el.cloneNode(true));
+      flow.style.transform = `translateY(${-(pg.startTop - units[pg.startBlock].top)}px)`;
       frame.appendChild(flow);
       page.appendChild(frame);
 
-      const isStart = startPages.has(i);
-      let cur = null;
-      for (const c of chapters) if (c.page <= i) cur = c;
+      if (pg.notes.length) {
+        const f = document.createElement('div');
+        f.className = 'fns';
+        f.style.setProperty('--fnfs', fnPt + 'pt');
+        f.style.setProperty('--wb', cfg.keep ? 'keep-all' : 'normal');
+        Object.assign(f.style, { left: left + 'mm', width: cw + 'mm', bottom: cfg.mb + 'mm' });
+        f.innerHTML = pg.notes.map(id => `<p class="fn"><span class="fnn">${notes[id].num})</span>${fmt(notes[id].text)}</p>`).join('');
+        page.appendChild(f);
+      }
 
-      // 머리말
-      if (!isStart) {
-        let hd = '', cls = 'hd';
+      let cur = null;
+      for (const c of chapters) if (c.i <= pg.startBlock) cur = c;
+      const edge = { left: left + 'mm', right: (cfg.pw - left - cw) + 'mm' };
+      if (!pg.isStart) {
+        let hd = '';
         if (!odd && cfg.title) hd = cfg.title;
         else if (odd && cfg.runChap && cur) hd = cur.title;
         else if (odd && cfg.title && !cfg.runChap) hd = cfg.title;
         if (hd) {
           const e = document.createElement('div');
-          e.className = cls;
+          e.className = 'hd';
           e.textContent = hd;
-          Object.assign(e.style, { top: Math.max(4, cfg.mt * 0.5 - 2) + 'mm', left: left + 'mm', right: (cfg.pw - left - cw) + 'mm' });
+          Object.assign(e.style, edge, { top: Math.max(4, cfg.mt * 0.5 - 2) + 'mm' });
           page.appendChild(e);
         }
       }
-      // 쪽번호
-      if (cfg.pn !== 'none' && !(cfg.pnSkip && isStart)) {
+      if (cfg.pn !== 'none' && !(cfg.pnSkip && pg.isStart)) {
         const e = document.createElement('div');
         e.className = 'ft' + (cfg.pn === 'outer' ? (odd ? ' r' : ' l') : '');
-        e.textContent = i + 1;
-        Object.assign(e.style, { bottom: Math.max(4, cfg.mb * 0.5 - 2) + 'mm', left: left + 'mm', right: (cfg.pw - left - cw) + 'mm' });
+        e.textContent = j + 1;
+        Object.assign(e.style, edge, { bottom: Math.max(4, cfg.mb * 0.5 - 2) + 'mm' });
         page.appendChild(e);
       }
-      pageEls.push(page);
-    }
+      return page;
+    });
 
     // 배치: 낱장 / 펼침면
     host.innerHTML = '';
+    const frag = document.createDocumentFragment();
     const spreadMode = $('spread').checked;
     host.classList.toggle('spread-mode', spreadMode);
     if (spreadMode) {
@@ -477,8 +720,8 @@ button.primary { background: var(--accent); color: var(--accent-ink); border-col
     } else pageEls.forEach(p => frag.appendChild(p));
     host.appendChild(frag);
 
-    const chars = blocks.filter(b => b.t === 'p').reduce((a, b) => a + b.text.length, 0);
-    $('stat').textContent = `${n}쪽 · ${chapters.length}개 챕터 · 본문 ${chars.toLocaleString()}자`;
+    const chars = blocks.filter(b => b.t === 'p').reduce((a, b) => a + b.text.replace(new RegExp(FN, 'g'), '').length, 0);
+    $('stat').textContent = `본문 ${pgs.length}쪽 (전체 ${list.length}면) · ${chapters.length}개 챕터 · ${chars.toLocaleString()}자` + (notes.length ? ` · 각주 ${notes.length}개` : '');
     applyZoom();
   }
 
@@ -491,15 +734,21 @@ button.primary { background: var(--accent); color: var(--accent-ink); border-col
 
   /* ---------- 이벤트 ---------- */
   fieldIds.forEach(id => {
-    const ev = ($(id).tagName === 'SELECT' || $(id).type === 'checkbox' || $(id).type === 'range') ? 'change' : 'input';
-    $(id).addEventListener(ev, () => {
+    const el = $(id);
+    const ev = (el.tagName === 'SELECT' || el.type === 'checkbox' || el.type === 'range') ? 'change' : 'input';
+    el.addEventListener(ev, () => {
       if (id === 'size') $('customSize').hidden = $('size').value !== 'custom';
       if (id === 'zoom') { applyZoom(); save(); return; }
       schedule();
     });
   });
   $('zoom').addEventListener('input', applyZoom);
-  $('btnSample').onclick = () => { $('src').value = SAMPLE; if (!$('title').value) $('title').value = '첫눈'; schedule(); };
+  $('btnSample').onclick = () => {
+    $('src').value = SAMPLE;
+    if (!$('title').value) $('title').value = '첫눈';
+    if (!$('author').value) $('author').value = '작가명';
+    schedule();
+  };
   $('btnClear').onclick = () => { $('src').value = ''; schedule(); };
   $('btnOpen').onclick = () => $('file').click();
   $('file').onchange = e => {
@@ -512,7 +761,7 @@ button.primary { background: var(--accent); color: var(--accent-ink); border-col
   $('btnPrint').onclick = () => window.print();
 
   /* ---------- 시작 ---------- */
-  if (!load()) { $('src').value = SAMPLE; $('title').value = '첫눈'; }
+  if (!load()) { $('src').value = SAMPLE; $('title').value = '첫눈'; $('author').value = '작가명'; }
   $('customSize').hidden = $('size').value !== 'custom';
   paginate();
   if (document.fonts) {
