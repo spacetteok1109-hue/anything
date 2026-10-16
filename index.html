@@ -99,6 +99,10 @@ button.primary { background: var(--accent); color: var(--accent-ink); border-col
 .flow h2.chapter .no { display: block; font-size: .5em; font-weight: 400; letter-spacing: .3em; margin-bottom: 1em; opacity: .7; }
 .flow .scene { text-align: center; text-indent: 0; margin: 0; letter-spacing: .6em; padding-left: .6em; }
 .flow .nw { white-space: nowrap; }
+.flow figure.ill { margin: 1.2em 0; text-indent: 0; text-align: center; }
+.flow figure.ill img { display: block; margin: 0 auto; }
+.flow figure.ill figcaption { font-size: .8em; line-height: 1.5; margin-top: .5em; color: #5d584f; letter-spacing: 0; }
+.flow figure.ill.full { margin: 0; display: flex; flex-direction: column; justify-content: center; align-items: center; }
 .flow sup.fnref { font-size: .62em; vertical-align: super; line-height: 0; text-indent: 0; letter-spacing: 0; font-weight: 400; margin-left: .05em; }
 .fns {
   position: absolute; font-family: var(--font); font-size: var(--fnfs); line-height: 1.55;
@@ -120,6 +124,15 @@ button.primary { background: var(--accent); color: var(--accent-ink); border-col
 .ft.l { text-align: left; } .ft.r { text-align: right; }
 #measure { position: absolute; left: -99999px; top: 0; visibility: hidden; pointer-events: none; }
 input[type=color] { width: 100%; height: 32px; padding: 2px; background: var(--bg); border: 1px solid var(--line); border-radius: 6px; }
+#imgList { display: flex; flex-direction: column; gap: 10px; margin-top: 10px; }
+.imgrow { border: 1px solid var(--line); border-radius: 8px; padding: 8px; background: var(--bg); }
+.imgrow .top { display: flex; gap: 8px; align-items: center; }
+.imgrow img { width: 46px; height: 46px; object-fit: cover; border-radius: 4px; flex: none; }
+.imgrow .nm { flex: 1; min-width: 0; font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.imgrow .nm b { color: var(--accent); }
+.imgrow .ctl { display: grid; grid-template-columns: 1fr 70px; gap: 6px; margin-top: 8px; }
+.imgrow .ctl input.cap { grid-column: 1 / -1; }
+.imgrow button { padding: 4px 8px; font-size: 12px; }
 textarea.small { height: 70px; font-family: inherit; font-size: 12.5px; }
 .empty { color: var(--muted); text-align: center; padding: 80px 0; }
 
@@ -164,7 +177,7 @@ textarea.small { height: 70px; font-family: inherit; font-size: 12.5px; }
     </fieldset>
 
     <fieldset>
-      <legend>책 정보 · 표지</legend>
+      <legend>책 정보 · 표지 · 판권</legend>
       <label for="title">책 제목 (표지·머리말)</label>
       <input type="text" id="title" placeholder="비워두면 머리말·표지 제목 없음">
       <div class="row">
@@ -175,12 +188,19 @@ textarea.small { height: 70px; font-family: inherit; font-size: 12.5px; }
       <input type="text" id="subtitle">
       <label class="chk"><input type="checkbox" id="fmCover" checked> 표지 페이지</label>
       <label class="chk"><input type="checkbox" id="fmTitle" checked> 속표지(표제지) 페이지</label>
-      <label class="chk"><input type="checkbox" id="fmColo" checked> 판권지(마지막 페이지)</label>
+      <label class="chk"><input type="checkbox" id="fmColo" checked> 판권지 (속표지 다음)</label>
       <label class="chk"><input type="checkbox" id="startRight" checked> 본문은 오른쪽(홀수) 페이지에서 시작</label>
       <label for="coverColor">표지 바탕색</label>
       <input type="color" id="coverColor" value="#2f3b4a">
       <label for="colo">판권지 문구</label>
       <textarea class="small" id="colo" placeholder="초판 발행, ISBN, 저작권 안내 등"></textarea>
+    </fieldset>
+
+    <fieldset>
+      <legend>삽화</legend>
+      <div class="btns" style="margin-top:0"><button id="btnImg">이미지 추가</button><input type="file" id="imgFile" accept="image/*" multiple hidden></div>
+      <div id="imgList"></div>
+      <p class="hint">“본문에 넣기”를 누르면 커서 위치에 <code>[삽화:1]</code> 줄이 들어갑니다. 그 줄의 위치가 삽화 위치입니다. “전면”은 한 쪽을 통째로 쓰고, “본문 중간”은 글 사이에 너비 %로 놓습니다. 이미지는 이 브라우저에 저장됩니다.</p>
     </fieldset>
 
     <fieldset>
@@ -351,6 +371,82 @@ textarea.small { height: 70px; font-family: inherit; font-size: 12.5px; }
 창밖의 눈은 밤새 쌓여 있었다. 발자국 하나 없는 마당을 가로질러, 하윤은 천천히 문 쪽으로 걸어갔다.`;
 
   const state = { timer: 0 };
+  let images = [];          // { id, name, w, h, src, mode, width, caption }
+  let nextImgId = 1;
+
+  /* ---------- 삽화 저장소 (IndexedDB) ---------- */
+  const idb = {
+    open: () => new Promise((res, rej) => {
+      const r = indexedDB.open('novel-excerpt', 1);
+      r.onupgradeneeded = () => r.result.createObjectStore('kv');
+      r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error);
+    }),
+    async get(k) { const db = await this.open(); return new Promise((res, rej) => { const q = db.transaction('kv').objectStore('kv').get(k); q.onsuccess = () => res(q.result); q.onerror = () => rej(q.error); }); },
+    async set(k, v) { const db = await this.open(); return new Promise((res, rej) => { const t = db.transaction('kv', 'readwrite'); t.objectStore('kv').put(v, k); t.oncomplete = res; t.onerror = () => rej(t.error); }); },
+  };
+  let imgSaveTimer = 0;
+  function saveImages() {
+    clearTimeout(imgSaveTimer);
+    imgSaveTimer = setTimeout(() => { idb.set('images', { next: nextImgId, list: images }).catch(() => {}); }, 300);
+  }
+  async function loadImages() {
+    try {
+      const o = await idb.get('images');
+      if (o && Array.isArray(o.list)) { images = o.list; nextImgId = o.next || (Math.max(0, ...images.map(i => i.id)) + 1); }
+    } catch (e) {}
+  }
+  function readImage(file) {
+    return new Promise((res, rej) => {
+      const url = URL.createObjectURL(file), img = new Image();
+      img.onload = () => {
+        const max = 1600, sc = Math.min(1, max / Math.max(img.naturalWidth, img.naturalHeight));
+        const w = Math.round(img.naturalWidth * sc), h = Math.round(img.naturalHeight * sc);
+        const c = document.createElement('canvas'); c.width = w; c.height = h;
+        const g = c.getContext('2d'); g.fillStyle = '#fff';
+        const png = file.type === 'image/png';
+        if (!png) g.fillRect(0, 0, w, h);
+        g.drawImage(img, 0, 0, w, h);
+        URL.revokeObjectURL(url);
+        res({ w, h, src: c.toDataURL(png ? 'image/png' : 'image/jpeg', 0.88) });
+      };
+      img.onerror = () => { URL.revokeObjectURL(url); rej(new Error('이미지를 읽을 수 없습니다')); };
+      img.src = url;
+    });
+  }
+  function insertMarker(id) {
+    const ta = $('src'), pos = ta.selectionStart ?? ta.value.length, v = ta.value;
+    const pre = pos > 0 && v[pos - 1] !== '\n' ? '\n' : '', post = v[pos] && v[pos] !== '\n' ? '\n' : '';
+    const ins = `${pre}[삽화:${id}]${post || '\n'}`;
+    ta.value = v.slice(0, pos) + ins + v.slice(pos);
+    ta.focus(); ta.selectionStart = ta.selectionEnd = pos + ins.length;
+    schedule();
+  }
+  function renderImgList() {
+    const box = $('imgList'); box.innerHTML = '';
+    images.forEach(im => {
+      const row = document.createElement('div'); row.className = 'imgrow';
+      row.innerHTML = `<div class="top"><img src="${im.src}" alt=""><div class="nm"><b>[삽화:${im.id}]</b> ${esc(im.name)}</div>
+        <button data-a="ins">본문에 넣기</button><button data-a="del">삭제</button></div>
+        <div class="ctl"><select data-a="mode"><option value="inline"${im.mode === 'inline' ? ' selected' : ''}>본문 중간</option><option value="full"${im.mode === 'full' ? ' selected' : ''}>전면 (한 쪽 통째로)</option></select>
+        <input type="number" data-a="width" value="${im.width}" min="20" max="100" step="5" title="본문 너비 %" ${im.mode === 'full' ? 'disabled' : ''}>
+        <input type="text" class="cap" data-a="cap" value="${esc(im.caption)}" placeholder="캡션 (선택)"></div>`;
+      row.addEventListener('click', e => {
+        const a = e.target.dataset && e.target.dataset.a;
+        if (a === 'ins') insertMarker(im.id);
+        if (a === 'del') { images = images.filter(x => x !== im); renderImgList(); saveImages(); schedule(); }
+      });
+      row.addEventListener('input', e => {
+        const a = e.target.dataset.a;
+        if (a === 'width') im.width = Math.min(100, Math.max(20, parseFloat(e.target.value) || 100));
+        if (a === 'cap') im.caption = e.target.value;
+        if (a === 'width' || a === 'cap') { saveImages(); schedule(); }
+      });
+      row.addEventListener('change', e => {
+        if (e.target.dataset.a === 'mode') { im.mode = e.target.value; renderImgList(); saveImages(); schedule(); }
+      });
+      box.appendChild(row);
+    });
+  }
 
   /* ---------- 설정 읽기 / 저장 ---------- */
   const fieldIds = ['src','size','cw','ch','mt','mb','mi','mo','font','customFont','tfont','fs','lh','ls','wrap','orphans',
@@ -434,6 +530,7 @@ textarea.small { height: 70px; font-family: inherit; font-size: 12.5px; }
       if ((m = line.match(/^#{1,3}\s+(.*)$/))) { blocks.push({ t:'chapter', text:m[1] }); continue; }
       if (/^(\*{3,}|-{3,}|(\*\s+){2,}\*|#{4,}|―{3,}|—{3,})$/.test(line)) { blocks.push({ t:'scene' }); continue; }
       if (cfg.auto && AUTO_CH.test(line)) { blocks.push({ t:'chapter', text:line }); continue; }
+      if ((m = line.match(/^\[삽화\s*[:：]\s*(\d+)\s*\]$/))) { blocks.push({ t:'fig', id:+m[1] }); continue; }
       // 각주 추출: ((내용))
       const notes = [];
       const body = line.replace(/\(\(([\s\S]*?)\)\)/g, (_, n) => { notes.push(clean(n, cfg)); return FN; });
@@ -441,6 +538,16 @@ textarea.small { height: 70px; font-family: inherit; font-size: 12.5px; }
       blocks.push({ t:'p', text:q, notes, dlg: /^[“‘「『"']/.test(q) });
     }
     return blocks;
+  }
+
+  function figHtml(im, cfg) {
+    const cw = Math.max(20, cfg.pw - cfg.mi - cfg.mo), chh = Math.max(20, cfg.ph - cfg.mt - cfg.mb);
+    const ratio = im.h / im.w, full = im.mode === 'full';
+    let w;
+    if (full) w = Math.min(cw, (chh - (im.caption ? 12 : 0)) / ratio);
+    else { w = cw * im.width / 100; if (w * ratio > chh * 0.7) w = chh * 0.7 / ratio; }
+    const cap = im.caption ? `<figcaption>${esc(im.caption)}</figcaption>` : '';
+    return `<figure class="ill${full ? ' full' : ''}" data-full="${full ? 1 : 0}"${full ? ` style="height:${chh}mm"` : ''}><img src="${im.src}" alt="${esc(im.name)}" style="width:${w}mm;height:${w * ratio}mm">${cap}</figure>`;
   }
 
   function buildHtml(blocks, cfg) {
@@ -454,6 +561,9 @@ textarea.small { height: 70px; font-family: inherit; font-size: 12.5px; }
           : `<h2 class="chapter" data-title="${esc(b.text)}">${esc(b.text)}</h2>`;
         ci++; fresh = true; prevDlg = null;
         if (cfg.fnRestart) num = 0;
+      } else if (b.t === 'fig') {
+        const im = images.find(x => x.id === b.id);
+        if (im) { html += figHtml(im, cfg); fresh = true; prevDlg = null; }
       } else if (b.t === 'scene') {
         html += `<p class="scene">*&nbsp;*&nbsp;*</p>`; fresh = true; prevDlg = null;
       } else {
@@ -499,16 +609,17 @@ textarea.small { height: 70px; font-family: inherit; font-size: 12.5px; }
     return [...mf.children].map(el => {
       const r = el.getBoundingClientRect();
       const top = r.top - base;
-      const isCh = el.classList.contains('chapter');
-      const n = isCh ? 1 : Math.max(1, Math.round(r.height / lineH));
-      const lh = isCh ? r.height : r.height / n;
+      const isCh = el.classList.contains('chapter'), isFig = el.tagName === 'FIGURE';
+      const atomic = isCh || isFig;
+      const n = atomic ? 1 : Math.max(1, Math.round(r.height / lineH));
+      const lh = atomic ? r.height : r.height / n;
       const refs = Array.from({ length: n }, () => []);
       el.querySelectorAll('.fnref').forEach(sup => {
         const sr = sup.getBoundingClientRect();
         const k = Math.min(n - 1, Math.max(0, Math.floor((sr.top + sr.height / 2 - base - top) / lh)));
         refs[k].push(+sup.dataset.fn);
       });
-      return { type: isCh ? 'c' : 'p', el, top, n, lh, refs, title: el.dataset.title };
+      return { type: isCh ? 'c' : isFig ? 'f' : 'p', full: el.dataset.full === '1', el, top, n, lh, refs, title: el.dataset.title };
     });
   }
 
@@ -523,7 +634,7 @@ textarea.small { height: 70px; font-family: inherit; font-size: 12.5px; }
       let notes = [], committed = 0, last = null;
       for (let cb = bi; cb < units.length; cb++) {
         const u = units[cb];
-        if (u.type === 'c' && committed > 0) break;      // 챕터는 항상 새 쪽에서 시작
+        if ((u.type === 'c' || (u.type === 'f' && u.full)) && committed > 0) break;   // 챕터·전면 삽화는 새 쪽에서 시작
         const from = cb === bi ? li : 0;
         let k = from, trial = notes.slice();
         while (k < u.n) {
@@ -532,7 +643,8 @@ textarea.small { height: 70px; font-family: inherit; font-size: 12.5px; }
           if ((committed + (k - from)) > 0 && bottom + noteTotal(nt) > chPx + 0.5) break;
           trial = nt; k++;
         }
-        if (k < u.n && u.type !== 'c') {                  // 문단이 쪽을 넘어감: 고아·과부 줄 처리
+        if (k < u.n && u.type === 'f') { if (k <= from) break; }   // 삽화는 쪼개지 않고 다음 쪽으로
+        else if (k < u.n && u.type !== 'c') {             // 문단이 쪽을 넘어감: 고아·과부 줄 처리
           if (u.n - k < widows) k = u.n - widows;
           if (from === 0 && k - from < orphans) k = from;
           if (committed === 0 && k <= from) k = from + 1;
@@ -541,7 +653,7 @@ textarea.small { height: 70px; font-family: inherit; font-size: 12.5px; }
         for (let l = from; l < k; l++) notes = notes.concat(u.refs[l]);
         committed += k - from;
         last = { b: cb, l: k };
-        if (k < u.n) break;
+        if (k < u.n || (u.type === 'f' && u.full)) break;
       }
       const lu = units[last.b];
       pages.push({
@@ -640,14 +752,13 @@ textarea.small { height: 70px; font-family: inherit; font-size: 12.5px; }
     // ----- 전체 페이지 목록 (표지류 + 본문 + 판권지)
     const list = [];
     if (cfg.fmCover) list.push({ kind: 'cover' });
-    if (cfg.fmTitle) list.push({ kind: 'titlepage' });
-    if (cfg.startRight && list.length % 2 === 1) list.push({ kind: 'blank' });
-    const front = list.length;
-    pgs.forEach((pg, j) => list.push({ kind: 'body', pg, j }));
-    if (cfg.fmColo) {
-      if (list.length % 2 === 0) list.push({ kind: 'blank' });   // 판권지는 왼쪽(짝수) 페이지에 둔다
-      list.push({ kind: 'colophon' });
+    if (cfg.fmTitle) {
+      if (cfg.startRight && list.length % 2 === 1) list.push({ kind: 'blank' });   // 속표지는 오른쪽(홀수)
+      list.push({ kind: 'titlepage' });
     }
+    if (cfg.fmColo) list.push({ kind: 'colophon' });                                // 판권지는 속표지 뒷면
+    if (cfg.startRight && list.length % 2 === 1) list.push({ kind: 'blank' });
+    pgs.forEach((pg, j) => list.push({ kind: 'body', pg, j }));
 
     const pageEls = list.map((it, g) => {
       if (it.kind === 'blank') return mkPage(cfg, 'blank');
@@ -759,11 +870,23 @@ textarea.small { height: 70px; font-family: inherit; font-size: 12.5px; }
     e.target.value = '';
   };
   $('btnPrint').onclick = () => window.print();
+  $('btnImg').onclick = () => $('imgFile').click();
+  $('imgFile').onchange = async e => {
+    for (const f of [...e.target.files]) {
+      try {
+        const d = await readImage(f);
+        images.push({ id: nextImgId++, name: f.name, w: d.w, h: d.h, src: d.src, mode: 'inline', width: 100, caption: '' });
+      } catch (err) {}
+    }
+    e.target.value = '';
+    renderImgList(); saveImages(); schedule();
+  };
 
   /* ---------- 시작 ---------- */
   if (!load()) { $('src').value = SAMPLE; $('title').value = '첫눈'; $('author').value = '작가명'; }
   $('customSize').hidden = $('size').value !== 'custom';
   paginate();
+  loadImages().then(() => { renderImgList(); paginate(); });
   if (document.fonts) {
     document.fonts.ready.then(paginate);
     document.fonts.addEventListener && document.fonts.addEventListener('loadingdone', () => schedule());
