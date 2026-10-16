@@ -980,7 +980,10 @@ textarea.small { height: 70px; font-family: inherit; font-size: 12.5px; }
   const exMsg = t => { $('exMsg').textContent = t; };
   const pad = (n, w = 3) => String(n).padStart(w, '0');
   const safeName = t => (t || '내지').replace(/[\\/:*?"<>|]+/g, '_').slice(0, 40);
-  function download(blob, name) {
+  async function download(blob, name) {
+    // claude.ai 보기에서는 downloads 기능으로 저장하고, 일반 브라우저에서는 직접 내려받는다
+    const dl = window.claude && window.claude.use ? await window.claude.use('downloads') : null;
+    if (dl) { await dl.save({ filename: name, data: blob }); return; }
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob); a.download = name;
     document.body.appendChild(a); a.click(); a.remove();
@@ -1022,16 +1025,16 @@ textarea.small { height: 70px; font-family: inherit; font-size: 12.5px; }
         host.removeChild(wrap);
         await new Promise(r => setTimeout(r, 0));
       }
-      if (files.length === 1) download(files[0].blob, files[0].name);
+      if (files.length === 1) await download(files[0].blob, files[0].name);
       else if (window.JSZip) {
         exMsg('ZIP으로 묶는 중…');
         const zip = new JSZip();
         files.forEach(f => zip.file(f.name, f.blob));
-        download(await zip.generateAsync({ type: 'blob', compression: 'STORE' }), `${title}_${mode === 'spread' ? '펼침면' : '낱장'}.zip`);
-      } else files.forEach(f => download(f.blob, f.name));
+        await download(await zip.generateAsync({ type: 'blob', compression: 'STORE' }), `${title}_${mode === 'spread' ? '펼침면' : '낱장'}.zip`);
+      } else for (const f of files) await download(f.blob, f.name);
       exMsg(`${files.length}장을 저장했습니다.`);
     } catch (err) {
-      exMsg('저장 중 오류가 발생했습니다: ' + (err && err.message || err));
+      exMsg(err && err.code === 'declined' ? '저장을 취소했습니다.' : '저장 중 오류가 발생했습니다: ' + (err && err.message || err));
     } finally { host.remove(); $('btnExportGo').disabled = false; }
   }
   $('btnExport').onclick = () => { $('exportPop').hidden = !$('exportPop').hidden; };
