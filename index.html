@@ -2,13 +2,15 @@
 <html lang="ko">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline' https://cdnjs.cloudflare.com; style-src 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src data: blob:; connect-src data: blob:; frame-src about: blob: data:; base-uri 'none'; form-action 'none'">
+<meta name="referrer" content="no-referrer">
 <title>소설 내지 발췌기</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Do+Hyeon&family=Gowun+Batang:wght@400;700&family=Gowun+Dodum&family=Hahmlet:wght@400;700&family=Nanum+Gothic:wght@400;700&family=Nanum+Myeongjo:wght@400;700;800&family=Noto+Sans+KR:wght@400;700&family=Noto+Serif+KR:wght@400;700&family=Song+Myung&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" integrity="sha512-BNaRQnYJYiPSqHHDb58B0yaPfCu+Wgds8Gp/gU33kqBtgNS4tSPHuGibyoeqMV/TJlSKda6FXzoEyYGjTe+vXA==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" integrity="sha512-XMVd28F1oH/O71fzwBnV7HucLxVwtxf26XV8P4wPk26EDxuGZ91N8bsOttmnomcCD3CS5ZMRL50H0GgOHvegtg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <style>
 :root {
   --bg: #eceae5;
@@ -162,17 +164,42 @@ input[type=color] { width: 100%; height: 32px; padding: 2px; background: var(--b
 textarea.small { height: 70px; font-family: inherit; font-size: 12.5px; }
 .empty { color: var(--muted); text-align: center; padding: 80px 0; }
 
+.mnav { display: none; }
 @media (max-width: 860px) {
-  .app { grid-template-columns: 1fr; height: auto; }
-  .side { border-right: 0; border-bottom: 1px solid var(--line); overflow: visible; }
-  .pane { overflow: visible; }
-  .main { height: auto; }
-  .stage { overflow: visible; }
+  .app { display: flex; flex-direction: column; height: 100vh; height: 100dvh; }
+  .side, .main { flex: 1; min-height: 0; height: auto; border: 0; }
+  .side { overflow: hidden; }
+  body[data-view="edit"] .main, body[data-view="preview"] .side { display: none; }
+  .sidehead { padding: calc(10px + env(safe-area-inset-top, 0px)) max(14px, env(safe-area-inset-left, 0px)) 0 max(14px, env(safe-area-inset-right, 0px)); }
+  .sidehead .sub { display: none; }
+  .pane { padding: 14px max(14px, env(safe-area-inset-left, 0px)) 24px max(14px, env(safe-area-inset-right, 0px)); overscroll-behavior: contain; }
+  button.tab { padding: 11px 2px; }
+  input[type=text], input[type=number], select, textarea { font-size: 16px; padding: 9px 10px; }
+  button { min-height: 40px; }
+  .chk { min-height: 32px; }
+  .chk input { width: 18px; height: 18px; }
+  textarea { height: 42vh; min-height: 220px; }
+  .imgrow button { min-height: 34px; }
+  .bar {
+    gap: 8px 10px; padding: calc(8px + env(safe-area-inset-top, 0px)) max(12px, env(safe-area-inset-left, 0px)) 8px max(12px, env(safe-area-inset-right, 0px));
+  }
+  .bar .stat { flex: 1 1 100%; font-size: 12px; color: var(--muted); }
+  .bar .grow { display: none; }
+  .bar label:has(#zoom), #btnPrint { display: none; }   /* 모바일: 핀치 확대 + 맞춤 버튼, PDF 인쇄는 데스크톱에서 */
+  .bar > button, .bar .chk { flex: none; }
+  .stage { padding: 14px 8px 28px; overscroll-behavior: contain; }
+  .mnav {
+    display: grid; grid-template-columns: 1fr 1fr; flex: none; background: var(--panel); border-top: 1px solid var(--line);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  .mnav button { border: 0; border-radius: 0; background: none; min-height: 50px; font-size: 14px; color: var(--muted); }
+  .mnav button[aria-pressed="true"] { color: var(--accent); font-weight: 700; box-shadow: inset 0 2px 0 var(--accent); }
+  .pop { position: fixed; left: 12px; right: 12px; top: auto; bottom: calc(60px + env(safe-area-inset-bottom, 0px)); width: auto; }
 }
 @media print {
   html, body { height: auto; background: none; }
-  .side, .bar, .pop { display: none !important; }
-  .app, .main { display: block; height: auto; }
+  .side, .bar, .pop, .mnav { display: none !important; }
+  .app, .main { display: block; height: auto !important; }
   .stage { padding: 0; overflow: visible; }
   .pages, .pages.spread-mode { display: block; zoom: 1 !important; }
   .spread { display: contents; }
@@ -378,7 +405,8 @@ textarea.small { height: 70px; font-family: inherit; font-size: 12.5px; }
       <span class="stat" id="stat">–</span>
       <span class="grow"></span>
       <label class="chk" style="margin:0"><input type="checkbox" id="spread"> 펼침면 보기</label>
-      <label>확대 <input type="range" id="zoom" min="40" max="160" value="90"></label>
+      <label>확대 <input type="range" id="zoom" min="20" max="160" value="90"></label>
+      <button id="btnFit" title="화면 너비에 맞춤">맞춤</button>
       <button id="btnExport">이미지 저장</button>
       <button class="primary" id="btnPrint" title="인쇄 창에서 대상을 PDF로 저장, 여백 없음, 배율 100%로 설정하세요">PDF로 저장 / 인쇄</button>
       <div class="pop" id="exportPop" hidden>
@@ -396,8 +424,12 @@ textarea.small { height: 70px; font-family: inherit; font-size: 12.5px; }
         <div class="msg" id="exMsg">여러 장이면 ZIP 파일로 묶어 저장합니다.</div>
       </div>
     </div>
-    <div class="stage"><div class="pages" id="pages"></div></div>
+    <div class="stage" id="stage"><div class="pages" id="pages"></div></div>
   </main>
+  <nav class="mnav" aria-label="화면 전환">
+    <button id="navEdit" aria-pressed="false">편집</button>
+    <button id="navView" aria-pressed="true">미리보기</button>
+  </nav>
 </div>
 <div id="measure"></div>
 
@@ -452,15 +484,31 @@ textarea.small { height: 70px; font-family: inherit; font-size: 12.5px; }
     clearTimeout(imgSaveTimer);
     imgSaveTimer = setTimeout(() => { idb.set('images', { next: nextImgId, list: images }).catch(() => {}); idb.set('cover', coverImg).catch(() => {}); }, 300);
   }
+  // 저장소(IndexedDB)에서 읽은 값은 신뢰하지 않고 형태를 검증한다
+  const IMG_DATA = /^data:image\/(png|jpeg|webp|gif);base64,[A-Za-z0-9+\/=]+$/;
+  const clamp = (n, lo, hi, d) => { n = +n; return isFinite(n) ? Math.min(hi, Math.max(lo, n)) : d; };
+  function cleanImg(o, withId) {
+    if (!o || typeof o !== 'object' || typeof o.src !== 'string' || !IMG_DATA.test(o.src)) return null;
+    const w = clamp(o.w, 1, 20000, 0), h = clamp(o.h, 1, 20000, 0);
+    if (!w || !h) return null;
+    const out = { name: String(o.name || '').slice(0, 200), w, h, src: o.src };
+    if (withId) {
+      const id = Math.trunc(+o.id);
+      if (!(id > 0)) return null;
+      Object.assign(out, { id, mode: o.mode === 'full' ? 'full' : 'inline', width: clamp(o.width, 20, 100, 100), caption: String(o.caption || '').slice(0, 300) });
+    }
+    return out;
+  }
   async function loadImages() {
     try {
       const o = await idb.get('images');
-      if (o && Array.isArray(o.list)) { images = o.list; nextImgId = o.next || (Math.max(0, ...images.map(i => i.id)) + 1); }
-      coverImg = (await idb.get('cover')) || null;
+      if (o && Array.isArray(o.list)) { images = o.list.map(i => cleanImg(i, true)).filter(Boolean); nextImgId = Math.max(1, Math.trunc(+o.next) || 0, ...images.map(i => i.id + 1)); }
+      coverImg = cleanImg(await idb.get('cover'), false);
     } catch (e) {}
   }
   function readImage(file, max = 1600) {
     return new Promise((res, rej) => {
+      if (!/^image\//.test(file.type) || file.size > 30 * 1024 * 1024) { rej(new Error('이미지 파일(30MB 이하)만 사용할 수 있습니다')); return; }
       const url = URL.createObjectURL(file), img = new Image();
       img.onload = () => {
         const sc = Math.min(1, max / Math.max(img.naturalWidth, img.naturalHeight));
@@ -521,7 +569,7 @@ textarea.small { height: 70px; font-family: inherit; font-size: 12.5px; }
     const v = id => $(id).type === 'checkbox' ? $(id).checked : $(id).value;
     const num = (id, d) => { const n = parseFloat($(id).value); return isFinite(n) ? n : d; };
     const [pw, ph] = $('size').value === 'custom' ? [num('cw',130), num('ch',190)] : $('size').value.split(',').map(Number);
-    const custom = $('customFont').value.replace(/['";{}]/g, '').trim();
+    const custom = $('customFont').value.replace(/['"`;{}()\\<>]/g, '').trim().slice(0, 60);
     const font = (custom ? `'${custom}', ` : '') + v('font');
     const tf = v('tfont');
     const wrap = v('wrap');
@@ -558,7 +606,7 @@ textarea.small { height: 70px; font-family: inherit; font-size: 12.5px; }
   }
 
   /* ---------- 원고 파서 ---------- */
-  const esc = s => s.replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
   const OPEN = { '“':'d', '‘':'s', '「':'d', '『':'s' };
   const CLOSE = { '”':'d', '’':'s', '」':'d', '』':'s' };
 
@@ -907,10 +955,28 @@ textarea.small { height: 70px; font-family: inherit; font-size: 12.5px; }
 
     const chars = blocks.filter(b => b.t === 'p').reduce((a, b) => a + b.text.replace(new RegExp(FN, 'g'), '').length, 0);
     $('stat').textContent = `본문 ${pgs.length}쪽 (전체 ${list.length}면) · ${chapters.length}개 챕터 · ${chars.toLocaleString()}자` + (notes.length ? ` · 각주 ${notes.length}개` : '');
-    applyZoom();
+    if (isMobile() && !userZoomed) fitZoom(); else applyZoom();
   }
 
   function applyZoom() { $('pages').style.zoom = $('zoom').value / 100; }
+  const isMobile = () => window.matchMedia('(max-width: 860px)').matches;
+  let userZoomed = false;
+  function fitZoom() {
+    if (!lastRender) return;
+    const st = $('stage'), w = st.clientWidth - 16;
+    if (w <= 50) return;                                  // 숨겨진 상태
+    const cols = $('spread').checked ? 2 : 1;
+    const z = Math.min(1.6, Math.max(0.2, w / (lastRender.cfg.pw * MM * cols)));
+    $('zoom').value = Math.round(z * 100);
+    applyZoom();
+  }
+  function setView(v) {
+    document.body.dataset.view = v;
+    $('navEdit').setAttribute('aria-pressed', v === 'edit');
+    $('navView').setAttribute('aria-pressed', v === 'preview');
+    try { localStorage.setItem('novel-view', v); } catch (e) {}
+    if (v === 'preview' && isMobile()) requestAnimationFrame(() => { if (!userZoomed) fitZoom(); });
+  }
 
   function schedule() {
     clearTimeout(state.timer);
@@ -927,7 +993,11 @@ textarea.small { height: 70px; font-family: inherit; font-size: 12.5px; }
       schedule();
     });
   });
-  $('zoom').addEventListener('input', applyZoom);
+  $('zoom').addEventListener('input', () => { userZoomed = true; applyZoom(); });
+  $('btnFit').onclick = () => { userZoomed = false; fitZoom(); };
+  $('navEdit').onclick = () => setView('edit');
+  $('navView').onclick = () => setView('preview');
+  window.addEventListener('resize', () => { if (isMobile() && !userZoomed) fitZoom(); });
   $('btnSample').onclick = () => {
     $('src').value = SAMPLE;
     if (!$('title').value) $('title').value = '첫눈';
@@ -938,6 +1008,7 @@ textarea.small { height: 70px; font-family: inherit; font-size: 12.5px; }
   $('btnOpen').onclick = () => $('file').click();
   $('file').onchange = e => {
     const f = e.target.files[0]; if (!f) return;
+    if (f.size > 5 * 1024 * 1024) { $('stat').textContent = '텍스트 파일은 5MB 이하만 열 수 있습니다.'; e.target.value = ''; return; }
     const r = new FileReader();
     r.onload = () => { $('src').value = r.result; schedule(); };
     r.readAsText(f, 'utf-8');
@@ -1050,6 +1121,9 @@ textarea.small { height: 70px; font-family: inherit; font-size: 12.5px; }
   document.querySelectorAll('button.tab').forEach(b => b.addEventListener('click', () => showTab(b.dataset.t)));
   let tab0 = 'text'; try { tab0 = localStorage.getItem('novel-tab') || 'text'; } catch (e) {}
   showTab(['text','book','layout','style'].includes(tab0) ? tab0 : 'text');
+
+  let view0 = 'preview'; try { view0 = localStorage.getItem('novel-view') || 'preview'; } catch (e) {}
+  setView(view0 === 'edit' ? 'edit' : 'preview');
 
   /* ---------- 시작 ---------- */
   if (!load()) { $('src').value = SAMPLE; $('title').value = '첫눈'; $('author').value = '작가명'; }
